@@ -12,6 +12,17 @@ typedef enum {
     GB_BUS_INTERNAL, /* Anything in highram. Might not be the most correct name. */
 } bus_t;
 
+static uint8_t flip_bits8(uint8_t value) {
+	return ((value >> 7) & 0x01)
+		| ((value >> 5) & 0x02)
+		| ((value >> 3) & 0x04)
+		| ((value >> 1) & 0x08)
+		| ((value << 1) & 0x10)
+		| ((value << 3) & 0x20)
+		| ((value << 5) & 0x40)
+		| ((value << 7) & 0x80);
+}
+
 static bus_t bus_for_addr(GB_gameboy_t *gb, uint16_t addr)
 {
     if (addr < 0x8000) {
@@ -552,6 +563,9 @@ static uint8_t read_high_memory(GB_gameboy_t *gb, uint16_t addr)
             case GB_IO_TAC:
                 return gb->io_registers[GB_IO_TAC] | 0xF8;
             case GB_IO_STAT:
+				if (gb->analogue_pocket_mode) {
+					return flip_bits8(gb->io_registers[GB_IO_STAT] | 0x80);
+				}
                 return gb->io_registers[GB_IO_STAT] | 0x80;
             case GB_IO_OPRI:
                 if (!GB_is_cgb(gb)) {
@@ -570,7 +584,6 @@ static uint8_t read_high_memory(GB_gameboy_t *gb, uint16_t addr)
             case GB_IO_JOYP:
                 GB_timing_sync(gb);
             case GB_IO_TMA:
-            case GB_IO_LCDC:
             case GB_IO_SCY:
             case GB_IO_SCX:
             case GB_IO_LY:
@@ -584,6 +597,16 @@ static uint8_t read_high_memory(GB_gameboy_t *gb, uint16_t addr)
             case GB_IO_SB:
             case GB_IO_DMA:
                 return gb->io_registers[addr & 0xFF];
+            case GB_IO_LCDC:
+				if (gb->analogue_pocket_mode) {
+					return 0xFF;
+				}
+				return gb->io_registers[GB_IO_LCDC];
+            case GB_IO_LCDC_AP:
+				if (gb->analogue_pocket_mode) {
+					return flip_bits8(gb->io_registers[GB_IO_LCDC]);
+				}
+				return 0xFF;
             case GB_IO_TIMA:
                 if (gb->tima_reload_state == GB_TIMA_RELOADING) {
                     return 0;
@@ -1308,8 +1331,18 @@ static void write_high_memory(GB_gameboy_t *gb, uint16_t addr, uint8_t value)
                 gb->io_registers[GB_IO_TAC] = value;
                 return;
 
-
+			case GB_IO_LCDC_AP:
+				if (!gb->analogue_pocket_mode) {
+					return;
+				}
             case GB_IO_LCDC:
+				if (gb->analogue_pocket_mode) {
+					if ((addr & 0xFF) == GB_IO_LCDC) {
+						return;
+					}
+					value = flip_bits8(value);
+				}
+
                 if ((value & 0x80) && !(gb->io_registers[GB_IO_LCDC] & 0x80)) {
                     if (value & 0x80) {
                         // LCD turned on
@@ -1359,6 +1392,10 @@ static void write_high_memory(GB_gameboy_t *gb, uint16_t addr, uint8_t value)
                 return;
 
             case GB_IO_STAT:
+				if (gb->analogue_pocket_mode) {
+					value = flip_bits8(value);
+				}
+
                 /* Delete previous R/W bits */
                 gb->io_registers[GB_IO_STAT] &= 7;
                 /* Set them by value */

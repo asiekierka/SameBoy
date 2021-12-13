@@ -598,6 +598,7 @@ static void load_boot_rom(GB_gameboy_t *gb, GB_boot_rom_t type)
         [GB_BOOT_ROM_CGB_0] = "cgb0_boot.bin",
         [GB_BOOT_ROM_CGB] = "cgb_boot.bin",
         [GB_BOOT_ROM_AGB] = "agb_boot.bin",
+        [GB_BOOT_ROM_AP] = "ap_boot.bin",
     };
     bool use_built_in = true;
     if (configuration.bootrom_path[0]) {

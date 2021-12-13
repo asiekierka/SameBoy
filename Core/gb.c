@@ -149,7 +149,10 @@ static void load_default_border(GB_gameboy_t *gb)
 void GB_init(GB_gameboy_t *gb, GB_model_t model)
 {
     memset(gb, 0, sizeof(*gb));
-    gb->model = model;
+    // gb->model = model;
+    gb->model = GB_MODEL_CGB_C;
+    gb->analogue_pocket_mode = true; // TODO
+
     if (GB_is_cgb(gb)) {
         gb->ram = malloc(gb->ram_size = 0x1000 * 8);
         gb->vram = malloc(gb->vram_size = 0x2000 * 2);
@@ -1579,6 +1582,9 @@ static void request_boot_rom(GB_gameboy_t *gb)
             case GB_MODEL_AGB:
                 type = GB_BOOT_ROM_AGB;
                 break;
+        }
+        if (gb->analogue_pocket_mode) {
+            type = GB_BOOT_ROM_AP;
         }
         gb->boot_rom_load_callback(gb, type);
     }

@@ -194,6 +194,8 @@ enum {
     /* General CGB features */
     GB_IO_KEY1       = 0x4d, // CGB Mode Only - Prepare Speed Switch
 
+    GB_IO_LCDC_AP    = 0x4e, // LCD Control (Analogue Pocket, R/W)
+
     /* Missing */
 
     GB_IO_VBK        = 0x4f, // CGB Mode Only - VRAM Bank
@@ -245,6 +247,7 @@ typedef enum {
     GB_BOOT_ROM_CGB_0,
     GB_BOOT_ROM_CGB,
     GB_BOOT_ROM_AGB,
+    GB_BOOT_ROM_AP,
 } GB_boot_rom_t;
 
 #ifdef GB_INTERNAL
@@ -742,6 +745,7 @@ struct GB_gameboy_internal_s {
         GB_rumble_mode_t rumble_mode;
         uint32_t rumble_on_cycles;
         uint32_t rumble_off_cycles;
+		bool analogue_pocket_mode;
                
         /* Temporary state */
         bool wx_just_changed;
@@ -751,7 +755,7 @@ struct GB_gameboy_internal_s {
         GB_gbs_header_t gbs_header;
    );
 };
-    
+
 #ifndef GB_INTERNAL
 struct GB_gameboy_s {
     char __internal[sizeof(struct GB_gameboy_internal_s)];
